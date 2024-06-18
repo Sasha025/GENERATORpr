@@ -37,7 +37,7 @@
             // 
             // btnSelectInputFile
             // 
-            this.btnSelectInputFile.Location = new System.Drawing.Point(224, 341);
+            this.btnSelectInputFile.Location = new System.Drawing.Point(65, 61);
             this.btnSelectInputFile.Name = "btnSelectInputFile";
             this.btnSelectInputFile.Size = new System.Drawing.Size(102, 48);
             this.btnSelectInputFile.TabIndex = 0;
@@ -47,7 +47,7 @@
             // 
             // btnSelectOutputFile
             // 
-            this.btnSelectOutputFile.Location = new System.Drawing.Point(933, 362);
+            this.btnSelectOutputFile.Location = new System.Drawing.Point(65, 169);
             this.btnSelectOutputFile.Name = "btnSelectOutputFile";
             this.btnSelectOutputFile.Size = new System.Drawing.Size(111, 48);
             this.btnSelectOutputFile.TabIndex = 1;
@@ -57,23 +57,24 @@
             // 
             // btnProcess
             // 
-            this.btnProcess.Location = new System.Drawing.Point(632, 269);
+            this.btnProcess.Location = new System.Drawing.Point(439, 105);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(111, 49);
             this.btnProcess.TabIndex = 2;
             this.btnProcess.Text = "Выполнение обработки";
             this.btnProcess.UseVisualStyleBackColor = true;
+            this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
             // 
             // txtInputFilePath
             // 
-            this.txtInputFilePath.Location = new System.Drawing.Point(199, 315);
+            this.txtInputFilePath.Location = new System.Drawing.Point(40, 35);
             this.txtInputFilePath.Name = "txtInputFilePath";
             this.txtInputFilePath.Size = new System.Drawing.Size(155, 20);
             this.txtInputFilePath.TabIndex = 3;
             // 
             // txtOutputFilePath
             // 
-            this.txtOutputFilePath.Location = new System.Drawing.Point(913, 327);
+            this.txtOutputFilePath.Location = new System.Drawing.Point(45, 134);
             this.txtOutputFilePath.Name = "txtOutputFilePath";
             this.txtOutputFilePath.Size = new System.Drawing.Size(155, 20);
             this.txtOutputFilePath.TabIndex = 4;
@@ -82,7 +83,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1454, 639);
+            this.ClientSize = new System.Drawing.Size(669, 391);
             this.Controls.Add(this.txtOutputFilePath);
             this.Controls.Add(this.txtInputFilePath);
             this.Controls.Add(this.btnProcess);
