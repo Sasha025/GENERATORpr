@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using static System.Collections.Specialized.BitVector32;
 
 namespace GENERATORpr
 {
@@ -85,33 +87,34 @@ namespace GENERATORpr
                 // Загружаем выходной XML файл
                 XDocument outputDoc = XDocument.Load(outputFilePath);
 
-                // Получаем секции
-                var sections = inputDoc.Descendants("Section")
-                                       .Select(section => new
-                                       {
-                                           Guid = section.Attribute("Guid")?.Value,
-                                           StartId = section.Element("Start")?.Attribute("Id")?.Value,
-                                           EndId = section.Element("End")?.Attribute("Id")?.Value
-                                       }).ToList();
+                // Получаем элементы Section внутри элемента Sections
+                var sections = inputDoc.Descendants("Sections").Elements("Section")
+                                        .Select(section => new
+                                        {
+                                            Guid = section.Attribute("Guid")?.Value,
+                                            StartId = section.Element("End")?.Attribute("Id")?.Value,
+                                            EndId = section.Element("Start")?.Attribute("Id")?.Value
+                                        }).Where(s => s.StartId != null && s.EndId != null).ToList();
 
                 // Получаем точки
                 var points = inputDoc.Descendants("SchemaPoint")
-                                     .Select(point => new
-                                     {
-                                         Id = point.Attribute("Id")?.Value,
-                                         X = Convert.ToInt32(Math.Round(Convert.ToDouble(point.Attribute("X")?.Value) / 100)),
-                                         Y = Convert.ToInt32(Math.Round(Convert.ToDouble(point.Attribute("Y")?.Value) / 100))
-                                     }).ToDictionary(p => p.Id);
+                                        .Select(point => new
+                                        {
+                                            Id = point.Attribute("Id")?.Value,
+                                            X = point.Attribute("X")?.Value,
+                                            Y = point.Attribute("Y")?.Value
+                                        }).ToList();
+                var a = 1;
 
                 // Добавляем точки в выходной XML
                 var pointsElement = outputDoc.Descendants("points").FirstOrDefault();
                 if (pointsElement != null)
                 {
                     int pointId = 1;
-                    foreach (var point in points.Values)
+                    foreach (var point in points)
                     {
                         XElement pointElement = new XElement("point",
-                            new XAttribute("id", pointId),
+                            new XAttribute("id", point.Id),
                             new XAttribute("X", point.X),
                             new XAttribute("Y", point.Y)
                         );
@@ -126,42 +129,58 @@ namespace GENERATORpr
                     }
                 }
 
+
                 // Добавляем линии в выходной XML
                 var linesElement = outputDoc.Descendants("lines").FirstOrDefault();
                 if (linesElement != null)
                 {
                     int lineId = 1;
-                    foreach (var section in sections)
+                    foreach (var sec in sections)
                     {
-                        if (points.TryGetValue(section.StartId, out var start) && points.TryGetValue(section.EndId, out var end))
+                        int startX = 0;
+                        int startY = 0;
+                        int endX = 0;
+                        int endY = 0;
+                        foreach (var point in points)
                         {
-                            XElement lineElement = new XElement("line",
-                                new XAttribute("id", lineId),
-                                new XAttribute("sX", start.X),
-                                new XAttribute("sY", start.Y),
-                                new XAttribute("eX", end.X),
-                                new XAttribute("eY", end.Y),
-                                new XAttribute("kind", "2")
-                            );
-                            lineElement.Add(new XElement("lineInfo",
-                                new XAttribute("type", "1"),
-                                new XAttribute("name", ""),
-                                new XAttribute("specialization", "17"),
-                                new XAttribute("lengthInVagons", "0"),
-                                new XAttribute("length", "0"),
-                                new XAttribute("park", ""),
-                                new XAttribute("lengthLeft", "0"),
-                                new XAttribute("nameLeft", ""),
-                                new XAttribute("signalLeft", "3"),
-                                new XAttribute("lengthRight", "0"),
-                                new XAttribute("nameRight", ""),
-                                new XAttribute("signalRight", "3")
-                            ));
-                            linesElement.Add(lineElement);
-                            lineId++;
+                            if (sec.StartId == point.Id && startX == 0 && startY == 0)
+                            {
+                                startX = int.Parse(point.X);
+                                startY = int.Parse(point.Y);
+                            }
+                            else if (sec.EndId == point.Id && endX == 0 && endY == 0)
+                            {
+                                endX = int.Parse(point.X);
+                                endY = int.Parse(point.Y);
+                            }
                         }
+                        XElement lineElement = new XElement("line",
+                              new XAttribute("id", lineId),
+                              new XAttribute("sX", startX),
+                              new XAttribute("sY", startY),
+                              new XAttribute("eX", endX),
+                              new XAttribute("eY", endY),
+                              new XAttribute("kind", "2")
+                            );
+                        lineElement.Add(new XElement("lineInfo",
+                              new XAttribute("type", "1"),
+                              new XAttribute("name", ""),
+                              new XAttribute("specialization", "17"),
+                              new XAttribute("lengthInVagons", "0"),
+                              new XAttribute("length", "0"),
+                              new XAttribute("park", ""),
+                              new XAttribute("lengthLeft", "0"),
+                              new XAttribute("nameLeft", ""),
+                              new XAttribute("signalLeft", "3"),
+                              new XAttribute("lengthRight", "0"),
+                              new XAttribute("nameRight", ""),
+                              new XAttribute("signalRight", "3")
+                        ));
+                        linesElement.Add(lineElement);
+                        lineId++;
                     }
                 }
+
 
                 // Сохраняем результат в выходной XML файл
                 outputDoc.Save(outputFilePath);
@@ -173,5 +192,7 @@ namespace GENERATORpr
                 throw;
             }
         }
+        
     }
 }
+
