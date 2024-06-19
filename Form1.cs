@@ -101,10 +101,17 @@ namespace GENERATORpr
                                         .Select(point => new
                                         {
                                             Id = point.Attribute("Id")?.Value,
-                                            X = point.Attribute("X")?.Value,
-                                            Y = point.Attribute("Y")?.Value
+                                            X = point.Attribute("X") != null ? TryParseDouble(point.Attribute("X")?.Value) : (double?)null,
+                                            Y = point.Attribute("Y") != null ? TryParseDouble(point.Attribute("Y")?.Value) : (double?)null
                                         }).ToList();
-                var a = 1;
+                double? TryParseDouble(string value)
+                {
+                    if (double.TryParse(value, out double result))
+                    {
+                        return result / 100;
+                    }
+                    return null;
+                }
 
                 // Добавляем точки в выходной XML
                 var pointsElement = outputDoc.Descendants("points").FirstOrDefault();
@@ -114,9 +121,9 @@ namespace GENERATORpr
                     foreach (var point in points)
                     {
                         XElement pointElement = new XElement("point",
-                            new XAttribute("id", point.Id),
-                            new XAttribute("X", point.X),
-                            new XAttribute("Y", point.Y)
+                            new XAttribute("id", pointId),
+                            new XAttribute("X", (int)Math.Round(point.X.Value)),
+                            new XAttribute("Y", (int)Math.Round(point.Y.Value))
                         );
                         pointElement.Add(new XElement("pointInfo",
                             new XAttribute("number", ""),
@@ -145,13 +152,13 @@ namespace GENERATORpr
                         {
                             if (sec.StartId == point.Id && startX == 0 && startY == 0)
                             {
-                                startX = int.Parse(point.X);
-                                startY = int.Parse(point.Y);
+                                startX = (int)Math.Round(point.X.Value);
+                                startY = (int)Math.Round(point.Y.Value);
                             }
                             else if (sec.EndId == point.Id && endX == 0 && endY == 0)
                             {
-                                endX = int.Parse(point.X);
-                                endY = int.Parse(point.Y);
+                                endX = (int)Math.Round(point.X.Value);
+                                endY = (int)Math.Round(point.Y.Value);
                             }
                         }
                         XElement lineElement = new XElement("line",
