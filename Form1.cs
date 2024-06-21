@@ -132,24 +132,24 @@ namespace GENERATORpr
                     int lineId = 1;
                     foreach (var sec in sections)
                     {
-                        int startX = 0;
-                        int startY = 0;
-                        int endX = 0;
-                        int endY = 0;
+                        int startX = -1;
+                        int startY = -1;
+                        int endX = -1;
+                        int endY = -1;
                         foreach (var point in points)
                         {
-                            if (sec.StartId == point.Id && startX == 0 && startY == 0)
+                            if (sec.StartId == point.Id && startX == -1 && startY == -1)
                             {
                                 startX = (int)Math.Round(point.X.Value);
                                 startY = (int)Math.Round(point.Y.Value);
                             }
-                            else if (sec.EndId == point.Id && endX == 0 && endY == 0)
+                            else if (sec.EndId == point.Id && endX == -1 && endY == -1)
                             {
                                 endX = (int)Math.Round(point.X.Value);
                                 endY = (int)Math.Round(point.Y.Value);
                             }
                         }
-                        if (startX != 0 && startY != 0 && endX != 0 && endY != 0)
+                        if (startX != -1 && startY != -1 && endX != -1 && endY != -1)
                         {
                             int kind;
                             if (startX == endX)
