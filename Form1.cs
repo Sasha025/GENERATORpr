@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -29,47 +30,20 @@ namespace GENERATORpr
             }
         }
 
-        private void btnSelectOutputFile_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog
-            {
-                Filter = "XML files (*.xml)|*.xml",
-                Title = "Select Output XML File"
-            };
-
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                txtOutputFilePath.Text = openFileDialog.FileName;
-            }
-        }
-
         private void btnProcess_Click(object sender, EventArgs e)
         {
             string inputFilePath = txtInputFilePath.Text;
-            string outputFilePath = txtOutputFilePath.Text;
-
-            if (string.IsNullOrEmpty(inputFilePath) || string.IsNullOrEmpty(outputFilePath))
-            {
-                MessageBox.Show("Please select both input and output XML files.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
 
             if (!File.Exists(inputFilePath))
             {
-                MessageBox.Show($"Input file {inputFilePath} not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (!File.Exists(outputFilePath))
-            {
-                MessageBox.Show($"Output file {outputFilePath} not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Входной файл {inputFilePath} не найден.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             try
             {
-                ProcessXmlFiles(inputFilePath, outputFilePath);
-                MessageBox.Show("XML files processed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ProcessXmlFiles(inputFilePath);
+                MessageBox.Show("XML файл успешно свормирован.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -77,7 +51,7 @@ namespace GENERATORpr
             }
         }
 
-        private void ProcessXmlFiles(string inputFilePath, string outputFilePath)
+        private void ProcessXmlFiles(string inputFilePath)
         {
             try
             {
@@ -85,15 +59,25 @@ namespace GENERATORpr
                 XDocument inputDoc = XDocument.Load(inputFilePath);
 
                 // Загружаем выходной XML файл
-                XDocument outputDoc = XDocument.Load(outputFilePath);
+                XDocument outputDoc = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
+                    <StationMap Step='20' Width='200' Height='90'>
+                    <points></points>
+                    <lines></lines>
+                    <textCollection>
+                        <text location_X='5' location_Y='2' size_W='8' size_H='2' text='ст. Карпогоры' alignment='2' fontFamilyName='Microsoft Sans Serif' fontStyle='100' fontSize='15' color='-16777216' angle='0' />
+                    </textCollection>
+                    <settings StationMap_backgroundColor='-1' StationMap_selectionColor='-16776961' MapGrid_visible='True' MapGrid_color='-2302756' MapCursorPoint_color='-5658199' MapCursorPoint_coordinatesVisible='True' MapLineDraw_lineColor='-8388608' MapLineDraw_pointColor='-8388608' MapLineDraw_incorrectLineColor='-5658199' MapLineDraw_incorrectPointColor='-5658199' MapLineDraw_coordinatesVisible='True' MapSelectionBox_borderColor='-16777077' MapSelectionBox_innerColor='-16776961' MapSelectionBox_coordinatesVisible='True' MapLines_defaultColor='-9868951' MapLines_defaultColorWithLength='-5103070' MapLines_wayColor='-8388608' MapLines_peregonColor='-16777088' MapLines_signalColor='-8388608' MapLines_signalVisible='True' MapLines_signalNames='True' MapPoints_errorArrowColor='-65536' MapPoints_simpleArrowColor='-8388480' MapPoints_crossColor='-5658199' MapPoints_tunnelColor='-16777216' MapGroups_groupColor='-8531' MapGroups_groupVisible='True' MapRoutes_routeColor='-65536' MapRoutesBuildSettings.maxRoutesCount='250' MapRoutesBuildSettings.maxRoutesCountForWay='250' MapText_textVisible='True' MapText_defaultColor='-16777216' MapText_defaultDraw='False' />
+                    <routesList />
+                    </StationMap>");
+
 
                 // Получаем элементы Section внутри элемента Sections
                 var sections = inputDoc.Descendants("Sections").Elements("Section")
                                         .Select(section => new
                                         {
                                             Guid = section.Attribute("Guid")?.Value,
-                                            StartId = section.Element("End")?.Attribute("Id")?.Value,
-                                            EndId = section.Element("Start")?.Attribute("Id")?.Value
+                                            EndId = section.Element("End")?.Attribute("Id")?.Value,
+                                            StartId = section.Element("Start")?.Attribute("Id")?.Value
                                         }).Where(s => s.StartId != null && s.EndId != null).ToList();
 
                 // Получаем точки
@@ -106,11 +90,15 @@ namespace GENERATORpr
                                         }).ToList();
                 double? TryParseDouble(string value)
                 {
-                    if (double.TryParse(value, out double result))
+                    try
                     {
-                        return result / 100;
+                        double result = double.Parse(value, CultureInfo.InvariantCulture);
+                        return Math.Round(result / 100);
                     }
-                    return null;
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
                 }
 
                 // Добавляем точки в выходной XML
@@ -161,36 +149,59 @@ namespace GENERATORpr
                                 endY = (int)Math.Round(point.Y.Value);
                             }
                         }
-                        XElement lineElement = new XElement("line",
+                        if (startX != 0 && startY != 0 && endX != 0 && endY != 0)
+                        {
+                            int kind;
+                            if (startX == endX)
+                            {
+                                kind = 0; // Вертикальная линия
+                            }
+                            else if (startY == endY)
+                            {
+                                kind = 1; // Горизонтальная линия
+                            }
+                            else
+                            {
+                                kind = 2; // Линия под углом
+                            }
+
+                            XElement lineElement = new XElement("line",
                               new XAttribute("id", lineId),
                               new XAttribute("sX", startX),
                               new XAttribute("sY", startY),
                               new XAttribute("eX", endX),
                               new XAttribute("eY", endY),
-                              new XAttribute("kind", "2")
+                              new XAttribute("kind", kind)
                             );
-                        lineElement.Add(new XElement("lineInfo",
-                              new XAttribute("type", "1"),
-                              new XAttribute("name", ""),
-                              new XAttribute("specialization", "17"),
-                              new XAttribute("lengthInVagons", "0"),
-                              new XAttribute("length", "0"),
-                              new XAttribute("park", ""),
-                              new XAttribute("lengthLeft", "0"),
-                              new XAttribute("nameLeft", ""),
-                              new XAttribute("signalLeft", "3"),
-                              new XAttribute("lengthRight", "0"),
-                              new XAttribute("nameRight", ""),
-                              new XAttribute("signalRight", "3")
-                        ));
-                        linesElement.Add(lineElement);
-                        lineId++;
+                            lineElement.Add(new XElement("lineInfo",
+                                  new XAttribute("type", "1"),
+                                  new XAttribute("name", ""),
+                                  new XAttribute("specialization", "17"),
+                                  new XAttribute("lengthInVagons", "0"),
+                                  new XAttribute("length", "0"),
+                                  new XAttribute("park", ""),
+                                  new XAttribute("lengthLeft", "0"),
+                                  new XAttribute("nameLeft", ""),
+                                  new XAttribute("signalLeft", "3"),
+                                  new XAttribute("lengthRight", "0"),
+                                  new XAttribute("nameRight", ""),
+                                  new XAttribute("signalRight", "3")
+                            ));
+                            linesElement.Add(lineElement);
+                            lineId++;
+                        }
                     }
                 }
-
-
-                // Сохраняем результат в выходной XML файл
-                outputDoc.Save(outputFilePath);
+                // Просим пользователя выбрать место для сохранения файла
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "XML Files|*.xml",
+                    Title = "Save an XML File"
+                };
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    outputDoc.Save(saveFileDialog.FileName);
+                }
             }
             catch (Exception ex)
             {
@@ -199,7 +210,7 @@ namespace GENERATORpr
                 throw;
             }
         }
-        
+
     }
 }
 

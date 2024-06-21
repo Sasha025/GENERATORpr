@@ -29,68 +29,52 @@
         private void InitializeComponent()
         {
             this.btnSelectInputFile = new System.Windows.Forms.Button();
-            this.btnSelectOutputFile = new System.Windows.Forms.Button();
             this.btnProcess = new System.Windows.Forms.Button();
             this.txtInputFilePath = new System.Windows.Forms.TextBox();
-            this.txtOutputFilePath = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // btnSelectInputFile
             // 
-            this.btnSelectInputFile.Location = new System.Drawing.Point(65, 61);
+            this.btnSelectInputFile.BackColor = System.Drawing.Color.RosyBrown;
+            this.btnSelectInputFile.Location = new System.Drawing.Point(129, 148);
             this.btnSelectInputFile.Name = "btnSelectInputFile";
             this.btnSelectInputFile.Size = new System.Drawing.Size(102, 48);
             this.btnSelectInputFile.TabIndex = 0;
-            this.btnSelectInputFile.Text = "Выберете входной файл";
-            this.btnSelectInputFile.UseVisualStyleBackColor = true;
+            this.btnSelectInputFile.Text = "Загрузить файл";
+            this.btnSelectInputFile.UseVisualStyleBackColor = false;
             this.btnSelectInputFile.Click += new System.EventHandler(this.btnSelectInputFile_Click);
-            // 
-            // btnSelectOutputFile
-            // 
-            this.btnSelectOutputFile.Location = new System.Drawing.Point(65, 169);
-            this.btnSelectOutputFile.Name = "btnSelectOutputFile";
-            this.btnSelectOutputFile.Size = new System.Drawing.Size(111, 48);
-            this.btnSelectOutputFile.TabIndex = 1;
-            this.btnSelectOutputFile.Text = "Выберете выходной файл";
-            this.btnSelectOutputFile.UseVisualStyleBackColor = true;
-            this.btnSelectOutputFile.Click += new System.EventHandler(this.btnSelectOutputFile_Click);
             // 
             // btnProcess
             // 
-            this.btnProcess.Location = new System.Drawing.Point(439, 105);
+            this.btnProcess.BackColor = System.Drawing.Color.RosyBrown;
+            this.btnProcess.Location = new System.Drawing.Point(451, 147);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(111, 49);
             this.btnProcess.TabIndex = 2;
-            this.btnProcess.Text = "Выполнение обработки";
-            this.btnProcess.UseVisualStyleBackColor = true;
+            this.btnProcess.Text = "Выполнить обработку";
+            this.btnProcess.UseVisualStyleBackColor = false;
             this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
             // 
             // txtInputFilePath
             // 
-            this.txtInputFilePath.Location = new System.Drawing.Point(40, 35);
+            this.txtInputFilePath.BackColor = System.Drawing.Color.Brown;
+            this.txtInputFilePath.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.txtInputFilePath.Location = new System.Drawing.Point(47, 202);
             this.txtInputFilePath.Name = "txtInputFilePath";
-            this.txtInputFilePath.Size = new System.Drawing.Size(155, 20);
+            this.txtInputFilePath.Size = new System.Drawing.Size(297, 13);
             this.txtInputFilePath.TabIndex = 3;
-            // 
-            // txtOutputFilePath
-            // 
-            this.txtOutputFilePath.Location = new System.Drawing.Point(45, 134);
-            this.txtOutputFilePath.Name = "txtOutputFilePath";
-            this.txtOutputFilePath.Size = new System.Drawing.Size(155, 20);
-            this.txtOutputFilePath.TabIndex = 4;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.Brown;
             this.ClientSize = new System.Drawing.Size(669, 391);
-            this.Controls.Add(this.txtOutputFilePath);
             this.Controls.Add(this.txtInputFilePath);
             this.Controls.Add(this.btnProcess);
-            this.Controls.Add(this.btnSelectOutputFile);
             this.Controls.Add(this.btnSelectInputFile);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Формирование xml файла для схемы ж/д станции ";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -99,10 +83,8 @@
         #endregion
 
         private System.Windows.Forms.Button btnSelectInputFile;
-        private System.Windows.Forms.Button btnSelectOutputFile;
         private System.Windows.Forms.Button btnProcess;
         private System.Windows.Forms.TextBox txtInputFilePath;
-        private System.Windows.Forms.TextBox txtOutputFilePath;
     }
 }
 
