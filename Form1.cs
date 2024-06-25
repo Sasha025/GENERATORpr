@@ -64,12 +64,29 @@ namespace GENERATORpr
                     <points></points>
                     <lines></lines>
                     <textCollection>
-                        <text location_X='5' location_Y='2' size_W='8' size_H='2' text='ст. Карпогоры' alignment='2' fontFamilyName='Microsoft Sans Serif' fontStyle='100' fontSize='15' color='-16777216' angle='0' />
+                        <text location_X='5' location_Y='2' size_W='8' size_H='2' text='' alignment='2' fontFamilyName='Microsoft Sans Serif' fontStyle='100' fontSize='15' color='-16777216' angle='0' />
                     </textCollection>
                     <settings StationMap_backgroundColor='-1' StationMap_selectionColor='-16776961' MapGrid_visible='True' MapGrid_color='-2302756' MapCursorPoint_color='-5658199' MapCursorPoint_coordinatesVisible='True' MapLineDraw_lineColor='-8388608' MapLineDraw_pointColor='-8388608' MapLineDraw_incorrectLineColor='-5658199' MapLineDraw_incorrectPointColor='-5658199' MapLineDraw_coordinatesVisible='True' MapSelectionBox_borderColor='-16777077' MapSelectionBox_innerColor='-16776961' MapSelectionBox_coordinatesVisible='True' MapLines_defaultColor='-9868951' MapLines_defaultColorWithLength='-5103070' MapLines_wayColor='-8388608' MapLines_peregonColor='-16777088' MapLines_signalColor='-8388608' MapLines_signalVisible='True' MapLines_signalNames='True' MapPoints_errorArrowColor='-65536' MapPoints_simpleArrowColor='-8388480' MapPoints_crossColor='-5658199' MapPoints_tunnelColor='-16777216' MapGroups_groupColor='-8531' MapGroups_groupVisible='True' MapRoutes_routeColor='-65536' MapRoutesBuildSettings.maxRoutesCount='250' MapRoutesBuildSettings.maxRoutesCountForWay='250' MapText_textVisible='True' MapText_defaultColor='-16777216' MapText_defaultDraw='False' />
                     <routesList />
                     </StationMap>");
 
+                // Извлекаем значение атрибута Title
+                string schemaTitle = inputDoc.Descendants("Schema").FirstOrDefault()?.Attribute("Title")?.Value ?? "Unknown";
+
+                // Обновляем название для схемы
+                var textElement = outputDoc.Descendants("text").FirstOrDefault();
+                if (textElement != null)
+                {
+                    textElement.SetAttributeValue("text", $"ст. {schemaTitle}");
+                }
+
+                // Получаем элементы switch
+                var switches = inputDoc.Descendants("Switch")
+                               .Select(switchElement => new
+                               {
+                                   Id = switchElement.Element("Point")?.Attribute("Id")?.Value,
+                                   Name = switchElement.Attribute("Name")?.Value
+                               }).ToList();
 
                 // Получаем элементы Section внутри элемента Sections
                 var sections = inputDoc.Descendants("Sections").Elements("Section")
@@ -108,13 +125,16 @@ namespace GENERATORpr
                     int pointId = 1;
                     foreach (var point in points)
                     {
+                        // Ищем имя свитча для текущей точки
+                        var switchName = switches.FirstOrDefault(s => s.Id == point.Id)?.Name ?? "";
+
                         XElement pointElement = new XElement("point",
                             new XAttribute("id", pointId),
                             new XAttribute("X", (int)Math.Round(point.X.Value)),
                             new XAttribute("Y", (int)Math.Round(point.Y.Value))
                         );
                         pointElement.Add(new XElement("pointInfo",
-                            new XAttribute("number", ""),
+                            new XAttribute("number", switchName),
                             new XAttribute("type", "2"),
                             new XAttribute("textPosition", "3"),
                             new XAttribute("gorlovina", "")
