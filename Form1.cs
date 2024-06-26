@@ -88,14 +88,43 @@ namespace GENERATORpr
                                    Name = switchElement.Attribute("Name")?.Value
                                }).ToList();
 
+                // Получаем секции и типы путей из EditorTracks
+                var editorTracks = inputDoc.Descendants("EditorTrack")
+                                           .Where(track => track.Attribute("Type")?.Value == "Station")
+                                           .Select(track => new
+                                           {
+                                               Guid = track.Attribute("Guid")?.Value,
+                                               Number = track.Attribute("Number")?.Value,
+                                               Sections = track.Element("Sections")?.Elements("Section").Select(section => new
+                                               {
+                                                   Guid = section.Attribute("Guid")?.Value,
+                                                   Length = int.Parse(section.Attribute("Length")?.Value ?? "0")
+                                               }).ToList()
+                                           }).ToList();
+
+                // Определяем секции с наибольшей длиной для каждого EditorTrack
+                var longestSections = editorTracks.Select(track => new
+                {
+                    track.Guid,
+                    track.Number,
+                    LongestSection = track.Sections.OrderByDescending(s => s.Length).FirstOrDefault()
+                }).ToDictionary(t => t.LongestSection.Guid, t => t.Number);
+
+                // Получаем секции для всех EditorTrack
+                var editorTrackSections = editorTracks.SelectMany(track => track.Sections)
+                                                      .Select(section => section.Guid)
+                                                      .ToHashSet();
+
                 // Получаем элементы Section внутри элемента Sections
                 var sections = inputDoc.Descendants("Sections").Elements("Section")
                                         .Select(section => new
                                         {
                                             Guid = section.Attribute("Guid")?.Value,
                                             EndId = section.Element("End")?.Attribute("Id")?.Value,
-                                            StartId = section.Element("Start")?.Attribute("Id")?.Value
+                                            StartId = section.Element("Start")?.Attribute("Id")?.Value,
+                                            Length = int.Parse(section.Attribute("Length")?.Value ?? "0")
                                         }).Where(s => s.StartId != null && s.EndId != null).ToList();
+
 
                 // Получаем точки
                 var points = inputDoc.Descendants("SchemaPoint")
@@ -185,6 +214,19 @@ namespace GENERATORpr
                                 kind = 2; // Линия под углом
                             }
 
+                            // Определяем тип и номер линии
+                            int type = 2; // По умолчанию type=2
+                            string number = "";
+                            if (editorTrackSections.Contains(sec.Guid))
+                            {
+                                type = 1; // Присваиваем type=1 для всех секций из EditorTrack
+                                if (longestSections.TryGetValue(sec.Guid, out string trackNumber))
+                                {
+                                    number = trackNumber; // Присваиваем номер только для самой длинной секции
+                                }
+                            }
+
+
                             XElement lineElement = new XElement("line",
                               new XAttribute("id", lineId),
                               new XAttribute("sX", startX),
@@ -194,11 +236,11 @@ namespace GENERATORpr
                               new XAttribute("kind", kind)
                             );
                             lineElement.Add(new XElement("lineInfo",
-                                  new XAttribute("type", "1"),
-                                  new XAttribute("name", ""),
+                                  new XAttribute("type", type),
+                                  new XAttribute("name", number),
                                   new XAttribute("specialization", "17"),
                                   new XAttribute("lengthInVagons", "0"),
-                                  new XAttribute("length", "0"),
+                                  new XAttribute("length", sec.Length),
                                   new XAttribute("park", ""),
                                   new XAttribute("lengthLeft", "0"),
                                   new XAttribute("nameLeft", ""),
