@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Collections.Specialized.BitVector32;
+using System.Collections.Generic;
 
 namespace GENERATORpr
 {
@@ -88,32 +89,39 @@ namespace GENERATORpr
                                    Name = switchElement.Attribute("Name")?.Value
                                }).ToList();
 
+                // Получаем все секции в один список
+                var allSections = inputDoc.Descendants("Section")
+                    .Select(section => new
+                    {
+                        Guid = section.Attribute("Guid")?.Value,
+                        Name = section.Attribute("Name")?.Value,
+                        Length = int.Parse(section.Attribute("Length")?.Value ?? "0"),
+                        EndId = section.Element("End")?.Attribute("Id")?.Value,
+                        StartId = section.Element("Start")?.Attribute("Id")?.Value
+                    }).Where(s => s.StartId != null && s.EndId != null).ToList();
+
                 // Получаем секции и типы путей из EditorTracks
                 var editorTracks = inputDoc.Descendants("EditorTrack")
-                                           .Where(track => track.Attribute("Type")?.Value == "Station")
-                                           .Select(track => new
-                                           {
-                                               Guid = track.Attribute("Guid")?.Value,
-                                               Number = track.Attribute("Number")?.Value,
-                                               Sections = track.Element("Sections")?.Elements("Section").Select(section => new
-                                               {
-                                                   Guid = section.Attribute("Guid")?.Value,
-                                                   Length = int.Parse(section.Attribute("Length")?.Value ?? "0")
-                                               }).ToList()
-                                           }).ToList();
+                    .Where(track => track.Attribute("Type")?.Value == "Station")
+                    .Select(track => new
+                    {
+                        Guid = track.Attribute("Guid")?.Value,
+                        Number = track.Attribute("Number")?.Value,
+                        Sections = track.Element("Sections")?.Elements("Section").Select(section => section.Attribute("Guid")?.Value).ToList()
+                    }).ToList();
 
                 // Определяем секции с наибольшей длиной для каждого EditorTrack
-                var longestSections = editorTracks.Select(track => new
-                {
-                    track.Guid,
-                    track.Number,
-                    LongestSection = track.Sections.OrderByDescending(s => s.Length).FirstOrDefault()
-                }).ToDictionary(t => t.LongestSection.Guid, t => t.Number);
+                var longestSections = new Dictionary<string, string>();
 
-                // Получаем секции для всех EditorTrack
-                var editorTrackSections = editorTracks.SelectMany(track => track.Sections)
-                                                      .Select(section => section.Guid)
-                                                      .ToHashSet();
+                foreach (var track in editorTracks)
+                {
+                    var longestSection = allSections
+                        .Where(s => track.Sections.Contains(s.Guid))
+                        .Aggregate((max, current) => max.Length > current.Length ? max : current);
+
+                    longestSections[longestSection.Guid] = track.Number;
+                }
+
 
                 // Получаем элементы Section внутри элемента Sections
                 var sections = inputDoc.Descendants("Sections").Elements("Section")
@@ -217,13 +225,11 @@ namespace GENERATORpr
                             // Определяем тип и номер линии
                             int type = 2; // По умолчанию type=2
                             string number = "";
-                            if (editorTrackSections.Contains(sec.Guid))
+                            int specialz = 17;
+                            if (longestSections.TryGetValue(sec.Guid, out string trackNumber))
                             {
-                                type = 1; // Присваиваем type=1 для всех секций из EditorTrack
-                                if (longestSections.TryGetValue(sec.Guid, out string trackNumber))
-                                {
-                                    number = trackNumber; // Присваиваем номер только для самой длинной секции
-                                }
+                                type = 1;
+                                number = trackNumber;
                             }
 
 
@@ -238,7 +244,7 @@ namespace GENERATORpr
                             lineElement.Add(new XElement("lineInfo",
                                   new XAttribute("type", type),
                                   new XAttribute("name", number),
-                                  new XAttribute("specialization", "17"),
+                                  new XAttribute("specialization", specialz),
                                   new XAttribute("lengthInVagons", "0"),
                                   new XAttribute("length", sec.Length),
                                   new XAttribute("park", ""),
