@@ -230,6 +230,7 @@ namespace GENERATORpr
                             {
                                 type = 1;
                                 number = trackNumber;
+                                specialz = 2;
                             }
 
 
