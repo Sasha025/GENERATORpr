@@ -214,6 +214,12 @@ namespace GENERATORpr
                             continue;
                         }
 
+                        // Переворачиваем линии так, чтобы sX всегда был меньше eX, а если X равны, то sY должен быть меньше eY
+                        if (startX > endX || (startX == endX && startY > endY))
+                        {
+                            (startX, startY, endX, endY) = (endX, endY, startX, startY);
+                        }
+
                         if (startX != -1 && startY != -1 && endX != -1 && endY != -1)
                         {
                             var lineKey1 = (startX, startY, endX, endY);
