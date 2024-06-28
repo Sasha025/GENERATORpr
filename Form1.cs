@@ -187,6 +187,7 @@ namespace GENERATORpr
                 if (linesElement != null)
                 {
                     int lineId = 1;
+                    var uniqueLines = new HashSet<(int, int, int, int)>();
                     foreach (var sec in sections)
                     {
                         int startX = -1;
@@ -206,9 +207,24 @@ namespace GENERATORpr
                                 endY = (int)Math.Round(point.Y.Value);
                             }
                         }
+
+                        // Пропускаем линию, если стартовые координаты совпадают с конечными
+                        if (startX == endX && startY == endY)
+                        {
+                            continue;
+                        }
+
                         if (startX != -1 && startY != -1 && endX != -1 && endY != -1)
                         {
-                            int kind;
+                            var lineKey1 = (startX, startY, endX, endY);
+                            var lineKey2 = (endX, endY, startX, startY);
+                            if (uniqueLines.Contains(lineKey1) || uniqueLines.Contains(lineKey2))
+                            {
+                                continue; // Пропускаем дублирующуюся линию
+                            }
+                            uniqueLines.Add(lineKey1);
+
+                            int kind = 7;
                             if (startX == endX)
                             {
                                 kind = 0; // Вертикальная линия
@@ -217,18 +233,30 @@ namespace GENERATORpr
                             {
                                 kind = 1; // Горизонтальная линия
                             }
-                            else
+                            else if ((startX < endX) && (startY < endY))
                             {
-                                kind = 2; // Линия под углом
+                                kind = 2;
+                            }
+                            else if ((startX < endX) && (startY > endY))
+                            {
+                                kind = 3;
+                            }
+                            else if ((startX > endX) && (startY < endY))
+                            {
+                                kind = 3;
+                            }
+                            else if ((startX > endX) && (startY > endY))
+                            {
+                                kind = 2;
                             }
 
                             // Определяем тип и номер линии
-                            int type = 2; // По умолчанию type=2
+                            int type = 1; // По умолчанию type=2
                             string number = "";
                             int specialz = 17;
                             if (longestSections.TryGetValue(sec.Guid, out string trackNumber))
                             {
-                                type = 1;
+                                type = 2;
                                 number = trackNumber;
                                 specialz = 2;
                             }
