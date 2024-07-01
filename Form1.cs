@@ -102,16 +102,19 @@ namespace GENERATORpr
 
                 // Получаем секции и типы путей из EditorTracks
                 var editorTracks = inputDoc.Descendants("EditorTrack")
-                    .Where(track => track.Attribute("Type")?.Value == "Station")
+                    .Where(track => track.Attribute("Type")?.Value == "Station" || track.Attribute("Type")?.Value == "Main")
                     .Select(track => new
                     {
                         Guid = track.Attribute("Guid")?.Value,
                         Number = track.Attribute("Number")?.Value,
+                        Type = track.Attribute("Type")?.Value,
                         Sections = track.Element("Sections")?.Elements("Section").Select(section => section.Attribute("Guid")?.Value).ToList()
                     }).ToList();
 
+
                 // Определяем секции с наибольшей длиной для каждого EditorTrack
-                var longestSections = new Dictionary<string, string>();
+                var longestSections = new Dictionary<string, (string Number, string Type)>();
+
 
                 foreach (var track in editorTracks)
                 {
@@ -119,7 +122,7 @@ namespace GENERATORpr
                         .Where(s => track.Sections.Contains(s.Guid))
                         .Aggregate((max, current) => max.Length > current.Length ? max : current);
 
-                    longestSections[longestSection.Guid] = track.Number;
+                    longestSections[longestSection.Guid] = (track.Number, track.Type);
                 }
 
 
@@ -257,15 +260,25 @@ namespace GENERATORpr
                             }
 
                             // Определяем тип и номер линии
-                            int type = 1; // По умолчанию type=2
+                            int type = 1; // По умолчанию type=1
                             string number = "";
                             int specialz = 17;
-                            if (longestSections.TryGetValue(sec.Guid, out string trackNumber))
+                            if (longestSections.TryGetValue(sec.Guid, out var trackInfo))
                             {
-                                type = 2;
-                                number = trackNumber;
-                                specialz = 2;
+                                if (trackInfo.Type == "Station")
+                                {
+                                    type = 2;
+                                    number = trackInfo.Number;
+                                    specialz = 2;
+                                }
+                                else if (trackInfo.Type == "Main")
+                                {
+                                    type = 2;
+                                    number = trackInfo.Number;
+                                    specialz = 15;
+                                }
                             }
+
 
 
                             XElement lineElement = new XElement("line",
