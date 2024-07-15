@@ -61,7 +61,7 @@ namespace GENERATORpr
 
                 // Загружаем выходной XML файл
                 XDocument outputDoc = XDocument.Parse(@"<?xml version='1.0' encoding='utf-8'?>
-                    <StationMap Step='20' Width='200' Height='90'>
+                    <StationMap Step='13' Width='200' Height='90'>
                     <points></points>
                     <lines></lines>
                     <textCollection>
@@ -88,6 +88,8 @@ namespace GENERATORpr
                                    Id = switchElement.Element("Point")?.Attribute("Id")?.Value,
                                    Name = switchElement.Attribute("Name")?.Value
                                }).ToList();
+
+
 
                 // Получаем все секции в один список
                 var allSections = inputDoc.Descendants("Section")
@@ -156,6 +158,18 @@ namespace GENERATORpr
                     {
                         throw ex;
                     }
+                }
+
+                // Определяем максимальные значения X и Y
+                int maxX = points.Max(p => (int)Math.Round(p.X.Value));
+                int maxY = points.Max(p => (int)Math.Round(p.Y.Value));
+
+                // Обновляем атрибуты Width и Height в StationMap
+                var stationMapElement = outputDoc.Descendants("StationMap").FirstOrDefault();
+                if (stationMapElement != null)
+                {
+                    stationMapElement.SetAttributeValue("Width", (maxX+2));
+                    stationMapElement.SetAttributeValue("Height", (maxY+2));
                 }
 
                 // Добавляем точки в выходной XML
