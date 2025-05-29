@@ -7,12 +7,15 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Collections.Specialized.BitVector32;
 using System.Collections.Generic;
+using GENERATORpr.Editor;
 
 namespace GENERATORpr
 {
-    public partial class Form1 : Form
+    public partial class FormConvertor : Form
     {
-        public Form1()
+        private string lastSavedOutputFilePath;
+
+        public FormConvertor()
         {
             InitializeComponent();
         }
@@ -45,6 +48,16 @@ namespace GENERATORpr
             {
                 ProcessXmlFiles(inputFilePath);
                 MessageBox.Show("XML файл успешно свормирован.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!string.IsNullOrEmpty(lastSavedOutputFilePath))
+                {
+                    FormEditor editor = new FormEditor(lastSavedOutputFilePath);
+                    editor.Show();
+                    this.Hide(); // если хочешь скрыть конвертор
+                }
+                else
+                {
+                    MessageBox.Show("Не удалось получить путь к сохраненному файлу.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
@@ -331,6 +344,7 @@ namespace GENERATORpr
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     outputDoc.Save(saveFileDialog.FileName);
+                    lastSavedOutputFilePath = saveFileDialog.FileName;
                 }
             }
             catch (Exception ex)
@@ -339,6 +353,17 @@ namespace GENERATORpr
                 MessageBox.Show($"An error occurred while processing XML files: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 throw;
             }
+        }
+        private void btnOpenEditor_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(lastSavedOutputFilePath) || !File.Exists(lastSavedOutputFilePath))
+            {
+                MessageBox.Show("Сначала выполните конвертацию и сохраните файл.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            FormEditor editor = new FormEditor(lastSavedOutputFilePath);
+            editor.Show();
         }
 
     }

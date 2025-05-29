@@ -1,6 +1,6 @@
 ﻿namespace GENERATORpr
 {
-    partial class Form1
+    partial class FormConvertor
     {
         /// <summary>
         /// Обязательная переменная конструктора.
