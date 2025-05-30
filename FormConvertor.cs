@@ -50,9 +50,18 @@ namespace GENERATORpr
                 MessageBox.Show("XML файл успешно свормирован.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 if (!string.IsNullOrEmpty(lastSavedOutputFilePath))
                 {
-                    FormEditor editor = new FormEditor(lastSavedOutputFilePath);
-                    editor.Show();
-                    this.Hide(); // если хочешь скрыть конвертор
+                    foreach (Form f in Application.OpenForms)
+                    {
+                        if (f is FormEditor existingEditor)
+                        {
+                            existingEditor.LoadXmlAndDraw(lastSavedOutputFilePath); // <- ключевой момент
+                            existingEditor.Activate();
+                            this.Close(); // закрываем конвертер
+                            return;
+                        }
+                    }
+
+                    MessageBox.Show("Окно редактора не найдено.");
                 }
                 else
                 {
@@ -362,8 +371,19 @@ namespace GENERATORpr
                 return;
             }
 
-            FormEditor editor = new FormEditor(lastSavedOutputFilePath);
-            editor.Show();
+            foreach (Form f in Application.OpenForms)
+            {
+                if (f is FormEditor existingEditor)
+                {
+                    existingEditor.LoadXmlAndDraw(lastSavedOutputFilePath);
+                    existingEditor.Activate();
+                    this.Close(); // закрываем конвертер
+                    return;
+                }
+            }
+
+            MessageBox.Show("Окно редактора не найдено.");
+
         }
 
     }

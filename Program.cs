@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using GENERATORpr.Editor;
 
 namespace GENERATORpr
 {
@@ -16,7 +17,7 @@ namespace GENERATORpr
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormConvertor());
+            Application.Run(new FormEditor(null));
         }
     }
 }
