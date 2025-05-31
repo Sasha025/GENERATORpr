@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormConvertor));
             this.btnSelectInputFile = new System.Windows.Forms.Button();
             this.btnProcess = new System.Windows.Forms.Button();
             this.txtInputFilePath = new System.Windows.Forms.TextBox();
@@ -35,8 +36,8 @@
             // 
             // btnSelectInputFile
             // 
-            this.btnSelectInputFile.BackColor = System.Drawing.Color.RosyBrown;
-            this.btnSelectInputFile.Location = new System.Drawing.Point(129, 148);
+            this.btnSelectInputFile.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.btnSelectInputFile.Location = new System.Drawing.Point(126, 148);
             this.btnSelectInputFile.Name = "btnSelectInputFile";
             this.btnSelectInputFile.Size = new System.Drawing.Size(102, 48);
             this.btnSelectInputFile.TabIndex = 0;
@@ -46,8 +47,8 @@
             // 
             // btnProcess
             // 
-            this.btnProcess.BackColor = System.Drawing.Color.RosyBrown;
-            this.btnProcess.Location = new System.Drawing.Point(451, 147);
+            this.btnProcess.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.btnProcess.Location = new System.Drawing.Point(429, 148);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(111, 49);
             this.btnProcess.TabIndex = 2;
@@ -57,23 +58,24 @@
             // 
             // txtInputFilePath
             // 
-            this.txtInputFilePath.BackColor = System.Drawing.Color.Brown;
+            this.txtInputFilePath.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(242)))), ((int)(((byte)(241)))));
             this.txtInputFilePath.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtInputFilePath.Location = new System.Drawing.Point(47, 202);
+            this.txtInputFilePath.Location = new System.Drawing.Point(12, 202);
             this.txtInputFilePath.Name = "txtInputFilePath";
-            this.txtInputFilePath.Size = new System.Drawing.Size(297, 13);
+            this.txtInputFilePath.Size = new System.Drawing.Size(337, 13);
             this.txtInputFilePath.TabIndex = 3;
             // 
-            // Form1
+            // FormConvertor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Brown;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(242)))), ((int)(((byte)(241)))));
             this.ClientSize = new System.Drawing.Size(669, 391);
             this.Controls.Add(this.txtInputFilePath);
             this.Controls.Add(this.btnProcess);
             this.Controls.Add(this.btnSelectInputFile);
-            this.Name = "Form1";
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Name = "FormConvertor";
             this.Text = "Формирование xml файла для схемы ж/д станции ";
             this.ResumeLayout(false);
             this.PerformLayout();

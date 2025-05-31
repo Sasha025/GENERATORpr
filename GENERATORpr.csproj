@@ -64,6 +64,12 @@
     <Compile Include="FormRoutes.Designer.cs">
       <DependentUpon>FormRoutes.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormSelectionInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSelectionInfo.Designer.cs">
+      <DependentUpon>FormSelectionInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormConvertor.resx">
@@ -75,6 +81,9 @@
     <EmbeddedResource Include="FormRoutes.resx">
       <DependentUpon>FormRoutes.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormSelectionInfo.resx">
+      <DependentUpon>FormSelectionInfo.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -83,6 +92,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -96,6 +106,36 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-line-50.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-move-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-zoom-in-24.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-zoom-out-24.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-line-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-click-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-route-30.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-list-view-24.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-services.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-services1.gif" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -156,6 +156,7 @@ namespace GENERATORpr
                                         {
                                             Guid = section.Attribute("Guid")?.Value,
                                             EndId = section.Element("End")?.Attribute("Id")?.Value,
+                                            Name = section.Attribute("Name")?.Value,
                                             StartId = section.Element("Start")?.Attribute("Id")?.Value,
                                             Length = int.Parse(section.Attribute("Length")?.Value ?? "0")
                                         }).Where(s => s.StartId != null && s.EndId != null).ToList();
@@ -297,7 +298,7 @@ namespace GENERATORpr
 
                             // Определяем тип и номер линии
                             int type = 1; // По умолчанию type=1
-                            string number = "";
+                            string number = sec.Name ?? "";
                             int specialz = 17;
                             if (longestSections.TryGetValue(sec.Guid, out var trackInfo))
                             {

@@ -8,13 +8,15 @@ namespace GENERATORpr.Editor
 {
     public partial class FormRoutes : Form
     {
+        private FormEditor editorForm;
         private string xmlFilePath;
         private Dictionary<string, List<string>> routeMap = new Dictionary<string, List<string>>();
 
-        public FormRoutes(string xmlFilePath)
+        public FormRoutes(string xmlFilePath, FormEditor editor)
         {
             InitializeComponent();
             this.xmlFilePath = xmlFilePath;
+            this.editorForm = editor;
             this.Text = "Все маршруты на станции";
             LoadRoutes();
         }
@@ -128,27 +130,33 @@ namespace GENERATORpr.Editor
             if (listBoxRoutes.SelectedItem != null)
             {
                 string selectedRoute = listBoxRoutes.SelectedItem.ToString();
+
                 if (routeMap.TryGetValue(selectedRoute, out var path))
                 {
                     int maxPerLine = 6;
                     for (int i = 0; i < path.Count; i += maxPerLine)
                     {
                         var segment = path.Skip(i).Take(maxPerLine).ToList();
-
-                        string line;
-                        if (i == 0)
-                            line = string.Join(" → ", segment); // первая строка — без начальной стрелки
-                        else
-                            line = "→ " + string.Join(" → ", segment); // остальные — с начальной стрелкой
-
+                        string line = (i == 0)
+                            ? string.Join(" → ", segment)
+                            : "→ " + string.Join(" → ", segment);
                         listBoxDetails.Items.Add(line);
+                    }
+
+                    // ✅ Подсветка маршрута
+                    if (editorForm != null)
+                    {
+                        editorForm.HighlightRoute(path);
                     }
                 }
             }
-        }
-        private void buttonClose_Click(object sender, EventArgs e)
+        }   
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            this.Close();
+            base.OnFormClosed(e);
+            if (editorForm != null)
+                editorForm.ClearHighlight(); // вызываем очистку выделений
         }
+
     }
 }
