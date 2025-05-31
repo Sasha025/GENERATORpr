@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -16,6 +17,10 @@ namespace GENERATORpr.Editor
         private const float zoomStep = 0.1f;
         private const float zoomMin = 0.5f;
         private const float zoomMax = 3.0f;
+        private string stationName = "";
+        private Point stationNamePosition = new Point(0, 0);
+        private Font stationFont = new Font("Microsoft Sans Serif", 15);
+        private Color stationColor = Color.Black;
 
         private bool isDrawingMode = false;
         private bool isPanningMode = false;
@@ -24,10 +29,20 @@ namespace GENERATORpr.Editor
         private FormSelectionInfo selectionForm;
         private Point? mouseSnapPreview = null;
         private Point panOffset = new Point(0, 0);
+        public List<Tuple<int, int, string>> BanPoints { get; set; } = new List<Tuple<int, int, string>>();
+        public List<Tuple<int, int, int, int>> BanLines { get; set; } = new List<Tuple<int, int, int, int>>();
         private List<Tuple<Point, Point>> highlightedRouteLines = new List<Tuple<Point, Point>>();
         private List<Tuple<Point, Point>> userLines = new List<Tuple<Point, Point>>();
         private Tuple<int, int, string> selectedPoint = null;
         private Tuple<int, int, int, int> selectedLine = null;
+        // Маршрутные выделения
+        public Tuple<int, int, string> StartPoint { get; set; }
+        public Tuple<int, int, string> EndPoint { get; set; }
+
+        public List<Tuple<int, int, int, int>> ForbiddenLines { get; set; } = new List<Tuple<int, int, int, int>>();
+        public List<Tuple<int, int, string>> ForbiddenPoints { get; set; } = new List<Tuple<int, int, string>>();
+        public List<Tuple<int, int, int, int>> RequiredLines { get; set; } = new List<Tuple<int, int, int, int>>();
+
 
         private Tuple<int, int, string> hoverPoint = null;
         private Tuple<int, int, int, int> hoverLine = null;
@@ -74,6 +89,26 @@ namespace GENERATORpr.Editor
                     int ex = (int)l.Attribute("eX");
                     int ey = (int)l.Attribute("eY");
                     loadedLines.Add(Tuple.Create(sx, sy, ex, ey));
+                }
+                // Поиск названия станции
+                var textNode = doc.Descendants("text").FirstOrDefault();
+                if (textNode != null)
+                {
+                    stationName = textNode.Attribute("text")?.Value ?? "";
+                    int locX = int.Parse(textNode.Attribute("location_X")?.Value ?? "0");
+                    int locY = int.Parse(textNode.Attribute("location_Y")?.Value ?? "0");
+                    stationNamePosition = new Point(locX, locY);
+
+                    float fontSize = float.Parse(textNode.Attribute("fontSize")?.Value ?? "15", CultureInfo.InvariantCulture);
+                    string fontFamily = textNode.Attribute("fontFamilyName")?.Value ?? "Microsoft Sans Serif";
+                    stationFont = new Font(fontFamily, fontSize);
+
+                    int colorVal = int.Parse(textNode.Attribute("color")?.Value ?? "-16777216");
+                    stationColor = Color.FromArgb(colorVal);
+                }
+                else
+                {
+                    stationName = "";
                 }
 
                 pictureBox1.Invalidate();
@@ -194,8 +229,75 @@ namespace GENERATORpr.Editor
                         ln.Item3 * zoomedGrid, ln.Item4 * zoomedGrid);
                 }
             }
+            if (!string.IsNullOrEmpty(stationName))
+            {
+                using (Brush brush = new SolidBrush(stationColor))
+                {
+                    g.DrawString(stationName, stationFont, brush,
+                        stationNamePosition.X * zoomedGrid,
+                        stationNamePosition.Y * zoomedGrid);
+                }
+            }
+
+            // Подсветка — запрещенные линии
+            using (Pen pen = new Pen(Color.Red, 3))
+            {
+                foreach (var ln in ForbiddenLines)
+                    g.DrawLine(pen, ln.Item1 * zoomedGrid, ln.Item2 * zoomedGrid, ln.Item3 * zoomedGrid, ln.Item4 * zoomedGrid);
+            }
+
+            // Подсветка — запрещенные стрелки (точки)
+            foreach (var pt in ForbiddenPoints)
+            {
+                g.FillEllipse(Brushes.Red, pt.Item1 * zoomedGrid - 5, pt.Item2 * zoomedGrid - 5, 10, 10);
+            }
+
+            // Подсветка — обязательные пути
+            using (Pen pen = new Pen(Color.Gold, 3))
+            {
+                foreach (var ln in RequiredLines)
+                    g.DrawLine(pen, ln.Item1 * zoomedGrid, ln.Item2 * zoomedGrid, ln.Item3 * zoomedGrid, ln.Item4 * zoomedGrid);
+            }
+
+            // Подсветка — начальная и конечная точки (толстая зелёная обводка)
+            using (Pen greenPen = new Pen(Color.LimeGreen, 6))
+            {
+                if (StartPoint != null)
+                {
+                    g.DrawEllipse(greenPen, StartPoint.Item1 * zoomedGrid - 7, StartPoint.Item2 * zoomedGrid - 7, 14, 14);
+                    g.FillEllipse(Brushes.Lime, StartPoint.Item1 * zoomedGrid - 5, StartPoint.Item2 * zoomedGrid - 5, 10, 10);
+                }
+
+                if (EndPoint != null)
+                {
+                    g.DrawEllipse(greenPen, EndPoint.Item1 * zoomedGrid - 7, EndPoint.Item2 * zoomedGrid - 7, 14, 14);
+                    g.FillEllipse(Brushes.Lime, EndPoint.Item1 * zoomedGrid - 5, EndPoint.Item2 * zoomedGrid - 5, 10, 10);
+                }
+            }
 
 
+
+        }
+        public void ApplyRouteHighlight(string startPointId, string endPointId, List<string> forbiddenPointsIds, List<string> forbiddenLinesRaw, List<string> requiredLinesRaw)
+        {
+            // Обновляем точки
+            StartPoint = loadedPoints.FirstOrDefault(p => p.Item3 == startPointId);
+            EndPoint = loadedPoints.FirstOrDefault(p => p.Item3 == endPointId);
+
+            // Обновляем запрещенные точки
+            ForbiddenPoints = loadedPoints.Where(p => forbiddenPointsIds.Contains(p.Item3)).ToList();
+
+            // Обновляем запрещенные линии — по координатам
+            ForbiddenLines = loadedLines.Where(l =>
+                forbiddenLinesRaw.Any(f =>
+                    $"{l.Item1},{l.Item2},{l.Item3},{l.Item4}" == f)).ToList();
+
+            // Обязательные линии
+            RequiredLines = loadedLines.Where(l =>
+                requiredLinesRaw.Any(f =>
+                    $"{l.Item1},{l.Item2},{l.Item3},{l.Item4}" == f)).ToList();
+
+            pictureBox1.Invalidate();
         }
         private void PictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
@@ -431,7 +533,7 @@ namespace GENERATORpr.Editor
             {
                 FormRoutes frm = new FormRoutes(xmlFilePath, this);
                 frm.StartPosition = FormStartPosition.Manual;
-                frm.Location = new Point(this.Right - frm.Width - 10,this.Bottom - frm.Height - 10);
+                frm.Location = new Point(this.Right - frm.Width - 10, this.Bottom - frm.Height - 10);
                 frm.Show(this);
             }
             else
@@ -439,10 +541,27 @@ namespace GENERATORpr.Editor
                 MessageBox.Show("Сначала загрузите XML-файл.");
             }
         }
+        public void UpdateRoutePreview()
+        {
+            pictureBox1.Invalidate();
+        }
+
 
         private void BtnBuildRoute_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Функция построения конкретного маршрута пока в разработке.");
+            var form = new FormBuildRoute(loadedPoints, loadedLines, this);
+            form.RouteBuilt += (s, args) =>
+            {
+                // подсветка
+                ApplyRouteHighlight(
+                    form.StartPointId,
+                    form.EndPointId,
+                    form.BanPoints,
+                    form.BanLines,
+                    form.RequiredLines
+                );
+            };
+            form.Show(this);
         }
 
         private void BtnOpenXml_Click(object sender, EventArgs e)
@@ -461,7 +580,7 @@ namespace GENERATORpr.Editor
         {
             FormConvertor form = new FormConvertor();
             form.StartPosition = FormStartPosition.Manual;
-            form.Location = new Point(this.Left + leftPanel.Right + 5,this.Bottom - form.Height - 10);
+            form.Location = new Point(this.Left + leftPanel.Right + 5, this.Bottom - form.Height - 10);
             form.Show(this);
         }
 

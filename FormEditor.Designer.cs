@@ -9,7 +9,7 @@ namespace GENERATORpr.Editor
     {
         private System.ComponentModel.IContainer components = null;
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        public System.Windows.Forms.PictureBox pictureBox1;
         private PanelWithoutScrollWheel canvasScrollPanel;
         private System.Windows.Forms.Panel leftPanel;
         private System.Windows.Forms.ToolStrip toolStrip;

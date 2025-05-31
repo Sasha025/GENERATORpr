@@ -46,6 +46,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormBuildResult.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBuildResult.Designer.cs">
+      <DependentUpon>FormBuildResult.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormBuildRoute.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBuildRoute.Designer.cs">
+      <DependentUpon>FormBuildRoute.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -72,6 +84,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormBuildResult.resx">
+      <DependentUpon>FormBuildResult.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormBuildRoute.resx">
+      <DependentUpon>FormBuildRoute.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormConvertor.resx">
       <DependentUpon>FormConvertor.cs</DependentUpon>
     </EmbeddedResource>
