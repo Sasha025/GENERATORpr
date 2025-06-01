@@ -29,8 +29,6 @@ namespace GENERATORpr.Editor
         private FormSelectionInfo selectionForm;
         private Point? mouseSnapPreview = null;
         private Point panOffset = new Point(0, 0);
-        public List<Tuple<int, int, string>> BanPoints { get; set; } = new List<Tuple<int, int, string>>();
-        public List<Tuple<int, int, int, int>> BanLines { get; set; } = new List<Tuple<int, int, int, int>>();
         private List<Tuple<Point, Point>> highlightedRouteLines = new List<Tuple<Point, Point>>();
         private List<Tuple<Point, Point>> userLines = new List<Tuple<Point, Point>>();
         private Tuple<int, int, string> selectedPoint = null;
@@ -39,8 +37,8 @@ namespace GENERATORpr.Editor
         public Tuple<int, int, string> StartPoint { get; set; }
         public Tuple<int, int, string> EndPoint { get; set; }
 
-        public List<Tuple<int, int, int, int>> ForbiddenLines { get; set; } = new List<Tuple<int, int, int, int>>();
-        public List<Tuple<int, int, string>> ForbiddenPoints { get; set; } = new List<Tuple<int, int, string>>();
+        public List<Tuple<int, int, int, int>> banLines { get; set; } = new List<Tuple<int, int, int, int>>();
+        public List<Tuple<int, int, string>> banPoints { get; set; } = new List<Tuple<int, int, string>>();
         public List<Tuple<int, int, int, int>> RequiredLines { get; set; } = new List<Tuple<int, int, int, int>>();
 
 
@@ -55,12 +53,12 @@ namespace GENERATORpr.Editor
             InitializeComponent();
             this.WindowState = FormWindowState.Maximized;
             this.xmlFilePath = xmlFilePath;
-
+            // Устанавливаем начальный размер холста 
             pictureBox1.Size = new Size(5000, 3000);
-            pictureBox1.MouseWheel += (s, e) => { }; // игнорируем
-            canvasScrollPanel.MouseWheel += (s, e) => { }; // тоже игнор
-
-            if (!string.IsNullOrEmpty(xmlFilePath))
+            // Отключаем прокрутку мышью — только управление кнопками
+            pictureBox1.MouseWheel += (s, e) => { };
+            canvasScrollPanel.MouseWheel += (s, e) => { }; 
+            if (!string.IsNullOrEmpty(xmlFilePath))  // Загружаем XML-схему станции
                 LoadXmlAndDraw(xmlFilePath);
         }
 
@@ -240,16 +238,16 @@ namespace GENERATORpr.Editor
             }
 
             // Подсветка — запрещенные линии
-            using (Pen pen = new Pen(Color.Red, 3))
+            using (Pen pen = new Pen(Color.Red, 6))
             {
-                foreach (var ln in ForbiddenLines)
+                foreach (var ln in banLines)
                     g.DrawLine(pen, ln.Item1 * zoomedGrid, ln.Item2 * zoomedGrid, ln.Item3 * zoomedGrid, ln.Item4 * zoomedGrid);
             }
 
             // Подсветка — запрещенные стрелки (точки)
-            foreach (var pt in ForbiddenPoints)
+            foreach (var pt in banPoints)
             {
-                g.FillEllipse(Brushes.Red, pt.Item1 * zoomedGrid - 5, pt.Item2 * zoomedGrid - 5, 10, 10);
+                g.FillEllipse(Brushes.Red, pt.Item1 * zoomedGrid - 7, pt.Item2 * zoomedGrid - 7, 14, 14);
             }
 
             // Подсветка — обязательные пути
@@ -278,18 +276,18 @@ namespace GENERATORpr.Editor
 
 
         }
-        public void ApplyRouteHighlight(string startPointId, string endPointId, List<string> forbiddenPointsIds, List<string> forbiddenLinesRaw, List<string> requiredLinesRaw)
+        public void ApplyRouteHighlight(string startPointId, string endPointId, List<string> banPointsIds, List<string> banLinesRaw, List<string> requiredLinesRaw)
         {
             // Обновляем точки
             StartPoint = loadedPoints.FirstOrDefault(p => p.Item3 == startPointId);
             EndPoint = loadedPoints.FirstOrDefault(p => p.Item3 == endPointId);
 
             // Обновляем запрещенные точки
-            ForbiddenPoints = loadedPoints.Where(p => forbiddenPointsIds.Contains(p.Item3)).ToList();
+            banPoints = loadedPoints.Where(p => banPointsIds.Contains(p.Item3)).ToList();
 
             // Обновляем запрещенные линии — по координатам
-            ForbiddenLines = loadedLines.Where(l =>
-                forbiddenLinesRaw.Any(f =>
+            banLines = loadedLines.Where(l =>
+                banLinesRaw.Any(f =>
                     $"{l.Item1},{l.Item2},{l.Item3},{l.Item4}" == f)).ToList();
 
             // Обязательные линии
@@ -621,11 +619,33 @@ namespace GENERATORpr.Editor
 
             pictureBox1.Invalidate();
         }
+        public void SetBanData(List<Tuple<int, int, string>> banPts, List<Tuple<int, int, int, int>> banLns)
+        {
+            this.banPoints = banPts;
+            this.banLines = banLns;
+            pictureBox1.Invalidate(); // перерисовка с выделением
+        }
+
         public void ClearHighlight()
         {
             highlightedRouteLines.Clear();
             pictureBox1.Invalidate();
         }
+
+        public void UpdateBanHighlights(List<string> pointIds, List<string> lineIds)
+        {
+            var pts = loadedPoints.Where(p => pointIds.Contains(p.Item3)).ToList();
+            var lns = loadedLines.Where(l => lineIds.Contains($"{l.Item1},{l.Item2},{l.Item3},{l.Item4}")).ToList();
+
+            banPoints = pts;
+            banLines = lns;
+
+            banPoints = pts;
+            banLines = lns;
+
+            pictureBox1.Invalidate();
+        }
+
 
     }
 

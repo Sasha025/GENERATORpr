@@ -29,7 +29,9 @@ namespace GENERATORpr
             this.allPoints = points;
             this.allLines = lines;
             this.editor = editor;
-
+            pointMap = allPoints.ToDictionary(p => (p.Item1, p.Item2), p => p.Item3);
+            this.lstBanPoints.SelectedIndexChanged += new System.EventHandler(this.lstBanPoints_SelectedIndexChanged);
+            this.lstBanLines.SelectedIndexChanged += new System.EventHandler(this.lstBanLines_SelectedIndexChanged);
             this.lstBanPoints.SelectedIndexChanged += lstBanPoints_SelectedIndexChanged;
             this.lstBanLines.SelectedIndexChanged += lstBanLines_SelectedIndexChanged;
             this.lstRequiredLines.SelectedIndexChanged += lstRequiredLines_SelectedIndexChanged;
@@ -56,6 +58,8 @@ namespace GENERATORpr
                 lstBanPoints.Items.Add(label);
             }
         }
+        private Dictionary<(int x, int y), string> pointMap;
+
 
         private void PopulateLineLists()
         {
@@ -64,11 +68,29 @@ namespace GENERATORpr
 
             foreach (var line in allLines)
             {
-                string id = $"{line.Item1},{line.Item2},{line.Item3},{line.Item4}";
-                string label = $"{id}";
-                lstBanLines.Items.Add(label);
-                lstRequiredLines.Items.Add(label);
+                string startId = pointMap.TryGetValue((line.Item1, line.Item2), out var sId) ? sId : "?";
+                string endId = pointMap.TryGetValue((line.Item3, line.Item4), out var eId) ? eId : "?";
+
+                string label = $"{startId} → {endId}";
+                string internalCode = $"{line.Item1},{line.Item2},{line.Item3},{line.Item4}";
+
+                // Привязываем текст к значениям
+                lstBanLines.Items.Add(new LineDisplayItem(label, internalCode));
+                lstRequiredLines.Items.Add(new LineDisplayItem(label, internalCode));
             }
+        }
+        private class LineDisplayItem
+        {
+            public string Label { get; }
+            public string Value { get; }
+
+            public LineDisplayItem(string label, string value)
+            {
+                Label = label;
+                Value = value;
+            }
+
+            public override string ToString() => Label;
         }
 
         private void btnBuild_Click(object sender, EventArgs e)
@@ -77,8 +99,8 @@ namespace GENERATORpr
             EndPointId = lstEnd.SelectedItem?.ToString()?.Split(' ')[0];
 
             BanPoints = lstBanPoints.SelectedItems.Cast<string>().Select(s => s.Split(' ')[0]).ToList();
-            BanLines = lstBanLines.SelectedItems.Cast<string>().ToList(); // строки с координатами
-            RequiredLines = lstRequiredLines.SelectedItems.Cast<string>().ToList(); // строки с координатами
+            BanLines = lstBanLines.SelectedItems.Cast<LineDisplayItem>().Select(i => i.Value).ToList(); // строки с координатами
+            RequiredLines = lstRequiredLines.SelectedItems.Cast<LineDisplayItem>().Select(i => i.Value).ToList(); // строки с координатами
 
             RouteBuilt?.Invoke(this, EventArgs.Empty);
             this.Close();
@@ -118,22 +140,24 @@ namespace GENERATORpr
 
         private void lstBanPoints_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var ids = lstBanPoints.SelectedItems.Cast<string>().Select(s => s.Split(' ')[0]).ToList();
-            editor.BanPoints = allPoints.Where(p => ids.Contains(p.Item3)).ToList();
-            editor.UpdateRoutePreview();
+            BanPoints = lstBanPoints.SelectedItems.Cast<string>().Select(s => s.Split(' ')[0]).ToList();
+
+            editor.UpdateBanHighlights(BanPoints, BanLines);
         }
 
         private void lstBanLines_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var ids = lstBanLines.SelectedItems.Cast<string>().ToList();
-            editor.BanLines = allLines.Where(l => ids.Contains($"{l.Item1},{l.Item2},{l.Item3},{l.Item4}")).ToList();
-            editor.UpdateRoutePreview();
-        }
+            BanLines = lstBanLines.SelectedItems.Cast<LineDisplayItem>().Select(item => item.Value).ToList();
 
+            editor.UpdateBanHighlights(BanPoints, BanLines);
+        }
         private void lstRequiredLines_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var ids = lstRequiredLines.SelectedItems.Cast<string>().ToList();
-            editor.RequiredLines = allLines.Where(l => ids.Contains($"{l.Item1},{l.Item2},{l.Item3},{l.Item4}")).ToList();
+            RequiredLines = lstRequiredLines.SelectedItems.Cast<LineDisplayItem>().Select(x => x.Value).ToList();
+            editor.RequiredLines = allLines
+                .Where(l => RequiredLines.Contains($"{l.Item1},{l.Item2},{l.Item3},{l.Item4}"))
+                .ToList();
+
             editor.UpdateRoutePreview();
         }
 
@@ -141,8 +165,8 @@ namespace GENERATORpr
         {
             editor.StartPoint = null;
             editor.EndPoint = null;
-            editor.BanPoints.Clear();
-            editor.BanLines.Clear();
+            editor.banPoints.Clear();
+            editor.banLines.Clear();
             editor.RequiredLines.Clear();
             editor.UpdateRoutePreview();
         }

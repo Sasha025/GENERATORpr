@@ -7,8 +7,6 @@ namespace GENERATORpr
         private System.ComponentModel.IContainer components = null;
 
         private System.Windows.Forms.TextBox txtName;
-        private System.Windows.Forms.ComboBox cmbType;
-        private System.Windows.Forms.NumericUpDown numTime;
         private System.Windows.Forms.ListBox lstStart;
         private System.Windows.Forms.ListBox lstEnd;
         private System.Windows.Forms.ListBox lstBanLines;
@@ -25,10 +23,7 @@ namespace GENERATORpr
 
         private void InitializeComponent()
         {
-
             this.txtName = new System.Windows.Forms.TextBox();
-            this.cmbType = new System.Windows.Forms.ComboBox();
-            this.numTime = new System.Windows.Forms.NumericUpDown();
             this.lstStart = new System.Windows.Forms.ListBox();
             this.lstEnd = new System.Windows.Forms.ListBox();
             this.lstBanLines = new System.Windows.Forms.ListBox();
@@ -41,7 +36,6 @@ namespace GENERATORpr
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.numTime)).BeginInit();
             this.SuspendLayout();
             // 
             // txtName
@@ -50,25 +44,6 @@ namespace GENERATORpr
             this.txtName.Name = "txtName";
             this.txtName.Size = new System.Drawing.Size(200, 20);
             this.txtName.TabIndex = 0;
-            // 
-            // cmbType
-            // 
-            this.cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbType.Items.AddRange(new object[] {
-            "Тип 1",
-            "Тип 2",
-            "Тип 3"});
-            this.cmbType.Location = new System.Drawing.Point(220, 25);
-            this.cmbType.Name = "cmbType";
-            this.cmbType.Size = new System.Drawing.Size(120, 21);
-            this.cmbType.TabIndex = 1;
-            // 
-            // numTime
-            // 
-            this.numTime.Location = new System.Drawing.Point(350, 25);
-            this.numTime.Name = "numTime";
-            this.numTime.Size = new System.Drawing.Size(60, 20);
-            this.numTime.TabIndex = 2;
             // 
             // lstStart
             // 
@@ -181,8 +156,6 @@ namespace GENERATORpr
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.txtName);
-            this.Controls.Add(this.cmbType);
-            this.Controls.Add(this.numTime);
             this.Controls.Add(this.lstStart);
             this.Controls.Add(this.lstEnd);
             this.Controls.Add(this.lstBanLines);
@@ -191,7 +164,6 @@ namespace GENERATORpr
             this.Controls.Add(this.btnBuild);
             this.Name = "FormBuildRoute";
             this.Text = "Построение маршрута";
-            ((System.ComponentModel.ISupportInitialize)(this.numTime)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
