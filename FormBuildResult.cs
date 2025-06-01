@@ -10,15 +10,23 @@ namespace GENERATORpr
     public partial class FormRouteResults : Form
     {
         private FormBuildRoute buildForm;
+        private Editor.FormEditor editor;
 
         public FormRouteResults()
         {
             InitializeComponent();
         }
 
-        public void SetData(string start, string end, List<string> route, List<Tuple<string, string, int>> pathSegments, FormBuildRoute parentForm)
+        public void SetData(
+            string start,
+            string end,
+            List<string> route,
+            List<Tuple<string, string, int>> pathSegments,
+            FormBuildRoute parentForm,
+            Editor.FormEditor editorInstance)
         {
             this.buildForm = parentForm;
+            this.editor = editorInstance;
 
             txtName.Text = $"{start} → {end}";
             txtName.ReadOnly = true;
@@ -60,6 +68,8 @@ namespace GENERATORpr
 
         private void btnBack_Click(object sender, EventArgs e)
         {
+            ClearEditorHighlights();
+
             if (buildForm != null)
                 buildForm.Show();
 
@@ -80,11 +90,9 @@ namespace GENERATORpr
                 {
                     using (var writer = new StreamWriter(saveFileDialog.FileName, false, Encoding.UTF8))
                     {
-                        // Заголовки
                         var headers = dgvRoutes.Columns.Cast<DataGridViewColumn>().Select(c => c.HeaderText);
                         writer.WriteLine(string.Join(";", headers));
 
-                        // Строки
                         foreach (DataGridViewRow row in dgvRoutes.Rows)
                         {
                             var values = row.Cells.Cast<DataGridViewCell>().Select(c => c.Value?.ToString() ?? "");
@@ -98,6 +106,26 @@ namespace GENERATORpr
                 {
                     MessageBox.Show("Ошибка при сохранении: " + ex.Message);
                 }
+            }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            ClearEditorHighlights();
+        }
+
+        private void ClearEditorHighlights()
+        {
+            if (editor != null)
+            {
+                editor.ClearHighlight();
+                editor.StartPoint = null;
+                editor.EndPoint = null;
+                editor.banPoints.Clear();
+                editor.banLines.Clear();
+                editor.RequiredLines.Clear();
+                editor.UpdateRoutePreview();
             }
         }
     }

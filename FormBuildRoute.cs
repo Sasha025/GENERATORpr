@@ -159,10 +159,10 @@ namespace GENERATORpr
 
             // Переход к форме результатов
             var resultForm = new FormRouteResults();
-            resultForm.SetData(StartPointId, EndPointId, route, routeSegments, this);
+            resultForm.SetData(StartPointId, EndPointId, route, routeSegments, this, editor);
             resultForm.Show();
-            this.Hide(); // не закрываем, чтобы можно было вернуться
 
+            this.Hide();
         }
 
         private Dictionary<string, List<string>> BuildGraph()
@@ -243,7 +243,7 @@ namespace GENERATORpr
                 }
             }
 
-            //  Фильтрация — ищем маршрут, содержащий ВСЕ обязательные линии
+            // 🎯 Фильтрация — ищем маршрут, содержащий ВСЕ обязательные линии
             foreach (var path in resultPaths.OrderBy(p => p.Count))
             {
                 var linesInPath = GetLinesFromRoute(path);

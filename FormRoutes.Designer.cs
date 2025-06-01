@@ -9,6 +9,8 @@ namespace GENERATORpr.Editor
         private System.Windows.Forms.ListBox listBoxDetails;
         private System.Windows.Forms.Label labelRoutes;
         private System.Windows.Forms.Label labelDetails;
+        private System.Windows.Forms.Button btnSave;
+
 
         protected override void Dispose(bool disposing)
         {
@@ -23,6 +25,7 @@ namespace GENERATORpr.Editor
             this.listBoxDetails = new System.Windows.Forms.ListBox();
             this.labelRoutes = new System.Windows.Forms.Label();
             this.labelDetails = new System.Windows.Forms.Label();
+            this.btnSave = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // listBoxRoutes
@@ -47,9 +50,9 @@ namespace GENERATORpr.Editor
             this.labelRoutes.AutoSize = true;
             this.labelRoutes.Location = new System.Drawing.Point(12, 15);
             this.labelRoutes.Name = "labelRoutes";
-            this.labelRoutes.Size = new System.Drawing.Size(97, 13);
+            this.labelRoutes.Size = new System.Drawing.Size(103, 13);
             this.labelRoutes.TabIndex = 3;
-            this.labelRoutes.Text = "Список маршрута";
+            this.labelRoutes.Text = "Список маршрутов";
             // 
             // labelDetails
             // 
@@ -60,6 +63,15 @@ namespace GENERATORpr.Editor
             this.labelDetails.TabIndex = 4;
             this.labelDetails.Text = "Детали маршрута";
             // 
+            // btnSave
+            // 
+            this.btnSave.Location = new System.Drawing.Point(476, 407);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(120, 22);
+            this.btnSave.TabIndex = 5;
+            this.btnSave.Text = "Сохранить маршруты";
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
             // FormRoutes
             // 
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(242)))), ((int)(((byte)(241)))));
@@ -68,6 +80,7 @@ namespace GENERATORpr.Editor
             this.Controls.Add(this.labelRoutes);
             this.Controls.Add(this.listBoxDetails);
             this.Controls.Add(this.listBoxRoutes);
+            this.Controls.Add(this.btnSave);
             this.Name = "FormRoutes";
             this.Text = "Все маршруты на станции";
             this.ResumeLayout(false);

@@ -585,20 +585,65 @@ namespace GENERATORpr.Editor
 
         private void BtnSaveImage_Click(object sender, EventArgs e)
         {
-            Bitmap bmp = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            pictureBox1.DrawToBitmap(bmp, pictureBox1.ClientRectangle);
+            if (loadedPoints.Count == 0 && loadedLines.Count == 0 && string.IsNullOrEmpty(stationName))
+            {
+                MessageBox.Show("Нет данных для сохранения.");
+                return;
+            }
 
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
+            int padding = 4;
+            int gridSize = 20;
+
+            var xs = loadedPoints.Select(p => p.Item1).ToList();
+            var ys = loadedPoints.Select(p => p.Item2).ToList();
+
+            xs.AddRange(loadedLines.SelectMany(l => new[] { l.Item1, l.Item3 }));
+            ys.AddRange(loadedLines.SelectMany(l => new[] { l.Item2, l.Item4 }));
+
+            if (!string.IsNullOrEmpty(stationName))
+            {
+                xs.Add(stationNamePosition.X);
+                ys.Add(stationNamePosition.Y - 2);
+            }
+
+            int minX = xs.Min() - padding;
+            int maxX = xs.Max() + padding;
+            int minY = ys.Min() - padding;
+            int maxY = ys.Max() + padding;
+
+            // ❗ Не выходим за пределы холста
+            minX = Math.Max(minX, 0);
+            minY = Math.Max(minY, 0);
+
+            int width = (maxX - minX + 1) * gridSize;
+            int height = (maxY - minY + 1) * gridSize;
+
+            Bitmap bmp = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                g.TranslateTransform(-minX * gridSize, -minY * gridSize);
+                g.TranslateTransform(panOffset.X, panOffset.Y);
+
+                var args = new PaintEventArgs(g, new Rectangle(0, 0, width, height));
+                pictureBox1_Paint(this.pictureBox1, args);
+            }
+
+            SaveFileDialog dialog = new SaveFileDialog
+            {
+                Filter = "PNG Image|*.png",
+                FileName = "station.png"
+            };
+
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                System.Drawing.Imaging.ImageFormat format = System.Drawing.Imaging.ImageFormat.Png;
-                if (dialog.FileName.EndsWith(".jpg")) format = System.Drawing.Imaging.ImageFormat.Jpeg;
-                if (dialog.FileName.EndsWith(".bmp")) format = System.Drawing.Imaging.ImageFormat.Bmp;
-
-                bmp.Save(dialog.FileName, format);
+                bmp.Save(dialog.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                MessageBox.Show("Изображение сохранено.");
             }
         }
+
+
+
         public void HighlightRoute(List<string> routePointIds)
         {
             highlightedRouteLines.Clear();

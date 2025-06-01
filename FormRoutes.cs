@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
 
@@ -156,6 +157,38 @@ namespace GENERATORpr.Editor
             base.OnFormClosed(e);
             if (editorForm != null)
                 editorForm.ClearHighlight(); // вызываем очистку выделений
+        }
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveDialog = new SaveFileDialog
+            {
+                Filter = "CSV файлы (*.csv)|*.csv",
+                Title = "Сохранить маршруты"
+            };
+
+            if (saveDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    using (var writer = new System.IO.StreamWriter(saveDialog.FileName, false, Encoding.UTF8))
+                    {
+                        writer.WriteLine("Маршрут;Описание");
+
+                        foreach (var entry in routeMap)
+                        {
+                            string key = entry.Key;
+                            string fullPath = string.Join(" → ", entry.Value);
+                            writer.WriteLine($"\"{key}\";\"{fullPath}\"");
+                        }
+                    }
+
+                    MessageBox.Show("Список маршрутов успешно сохранён.", "Успешно", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка при сохранении: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
     }
