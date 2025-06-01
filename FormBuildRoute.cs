@@ -95,6 +95,7 @@ namespace GENERATORpr
 
         private void btnBuild_Click(object sender, EventArgs e)
         {
+            // Получаем выбранные значения
             StartPointId = lstStart.SelectedItem?.ToString()?.Split(' ')[0];
             EndPointId = lstEnd.SelectedItem?.ToString()?.Split(' ')[0];
 
@@ -102,7 +103,7 @@ namespace GENERATORpr
             BanLines = lstBanLines.SelectedItems.Cast<LineDisplayItem>().Select(x => x.Value).ToList();
             RequiredLines = lstRequiredLines.SelectedItems.Cast<LineDisplayItem>().Select(x => x.Value).ToList();
 
-            // Построим маршрут
+            // Пытаемся построить маршрут
             var route = BuildRoute(StartPointId, EndPointId, BanPoints, BanLines, RequiredLines);
 
             if (route == null)
@@ -111,49 +112,101 @@ namespace GENERATORpr
                 return;
             }
 
-            // Открываем форму с результатом
-            var resultForm = new FormRouteResults();
-            resultForm.SetData(StartPointId, EndPointId, route);
-            resultForm.Show();
+            // Формируем список сегментов маршрута с длинами
+            var routeSegments = new List<Tuple<string, string, int>>();
 
-            this.Close();
+            for (int i = 0; i < route.Count - 1; i++)
+            {
+                string from = route[i];
+                string to = route[i + 1];
+
+                var p1 = allPoints.First(p => p.Item3 == from);
+                var p2 = allPoints.First(p => p.Item3 == to);
+
+                var match = $"{p1.Item1},{p1.Item2},{p2.Item1},{p2.Item2}";
+                var matchRev = $"{p2.Item1},{p2.Item2},{p1.Item1},{p1.Item2}";
+
+                int length = 0;
+
+                try
+                {
+                    var doc = System.Xml.Linq.XDocument.Load(editor.XmlFilePath);
+                    var lineEl = doc.Descendants("line").FirstOrDefault(l =>
+                        (int)l.Attribute("sX") == p1.Item1 && (int)l.Attribute("sY") == p1.Item2 &&
+                        (int)l.Attribute("eX") == p2.Item1 && (int)l.Attribute("eY") == p2.Item2
+                        ||
+                        (int)l.Attribute("sX") == p2.Item1 && (int)l.Attribute("sY") == p2.Item2 &&
+                        (int)l.Attribute("eX") == p1.Item1 && (int)l.Attribute("eY") == p1.Item2
+                    );
+
+                    if (lineEl != null)
+                    {
+                        var info = lineEl.Element("lineInfo");
+                        if (info != null)
+                            int.TryParse(info.Attribute("length")?.Value ?? "0", out length);
+                    }
+                }
+                catch
+                {
+                    // на случай проблем с XML
+                }
+
+                routeSegments.Add(Tuple.Create(from, to, length));
+            }
+
+            // ✅ Подсветка маршрута на схеме
+            editor.HighlightRoute(route);
+
+            // Переход к форме результатов
+            var resultForm = new FormRouteResults();
+            resultForm.SetData(StartPointId, EndPointId, route, routeSegments, this);
+            resultForm.Show();
+            this.Hide(); // не закрываем, чтобы можно было вернуться
+
         }
+
         private Dictionary<string, List<string>> BuildGraph()
         {
             var graph = new Dictionary<string, List<string>>();
 
             foreach (var pt in allPoints)
-            {
                 graph[pt.Item3] = new List<string>();
-            }
 
             foreach (var line in allLines)
             {
                 string startId = pointMap.TryGetValue((line.Item1, line.Item2), out var sId) ? sId : null;
                 string endId = pointMap.TryGetValue((line.Item3, line.Item4), out var eId) ? eId : null;
 
-                if (!string.IsNullOrEmpty(startId) && !string.IsNullOrEmpty(endId))
-                {
-                    if (!graph[startId].Contains(endId))
-                        graph[startId].Add(endId);
+                if (string.IsNullOrEmpty(startId) || string.IsNullOrEmpty(endId))
+                    continue;
 
-                    if (!graph[endId].Contains(startId))
-                        graph[endId].Add(startId);
-                }
+                string code = $"{line.Item1},{line.Item2},{line.Item3},{line.Item4}";
+                string codeRev = $"{line.Item3},{line.Item4},{line.Item1},{line.Item2}";
+
+                // ❌ Пропускаем запрещённые линии
+                if (BanLines.Contains(code) || BanLines.Contains(codeRev))
+                    continue;
+
+                if (!graph[startId].Contains(endId))
+                    graph[startId].Add(endId);
+
+                if (!graph[endId].Contains(startId))
+                    graph[endId].Add(startId);
             }
 
             return graph;
         }
 
-        private List<string> BuildRoute(string startId,string endId,List<string> bannedPoints,List<string> bannedLines,List<string> requiredLines)
+
+        private List<string> BuildRoute(string startId, string endId, List<string> bannedPoints, List<string> bannedLines, List<string> requiredLines)
         {
+            this.BanLines = bannedLines;
             var graph = BuildGraph();
 
-            // Удаляем запрещённые точки
+            // ❌ Удаляем запрещённые точки
             foreach (var ban in bannedPoints)
                 graph.Remove(ban);
 
-            // Удаляем запрещённые связи
             foreach (var kv in graph.ToList())
             {
                 graph[kv.Key] = kv.Value
@@ -161,10 +214,11 @@ namespace GENERATORpr
                     .ToList();
             }
 
-            // BFS
+            // BFS: но сохраняем ВСЕ маршруты
+            var resultPaths = new List<List<string>>();
             var queue = new Queue<List<string>>();
             queue.Enqueue(new List<string> { startId });
-            var visited = new HashSet<string> { startId };
+            var visitedPaths = new HashSet<string>();
 
             while (queue.Count > 0)
             {
@@ -173,30 +227,44 @@ namespace GENERATORpr
 
                 if (last == endId)
                 {
-                    // Проверяем, содержит ли обязательные линии
-                    if (requiredLines.Count > 0)
-                    {
-                        var linesInPath = GetLinesFromRoute(path);
-                        bool containsAll = requiredLines.All(req => linesInPath.Contains(req));
-                        if (!containsAll) continue; // игнорируем путь
-                    }
-
-                    return path; // маршрут найден
+                    resultPaths.Add(path);
+                    continue;
                 }
+
+                if (!graph.ContainsKey(last)) continue;
 
                 foreach (var neighbor in graph[last])
                 {
-                    if (!visited.Contains(neighbor))
+                    if (!path.Contains(neighbor)) // избегаем циклов
                     {
-                        visited.Add(neighbor);
                         var newPath = new List<string>(path) { neighbor };
                         queue.Enqueue(newPath);
                     }
                 }
             }
 
+            //  Фильтрация — ищем маршрут, содержащий ВСЕ обязательные линии
+            foreach (var path in resultPaths.OrderBy(p => p.Count))
+            {
+                var linesInPath = GetLinesFromRoute(path);
+                bool containsAll = requiredLines.All(req =>
+                    linesInPath.Contains(req) || linesInPath.Contains(ReverseLine(req)));
+
+                if (requiredLines.Count == 0 || containsAll)
+                    return path;
+            }
+
             return null;
         }
+
+        private string ReverseLine(string code)
+        {
+            var parts = code.Split(',');
+            if (parts.Length != 4) return code;
+
+            return $"{parts[2]},{parts[3]},{parts[0]},{parts[1]}";
+        }
+
         private List<string> GetLinesFromRoute(List<string> path)
         {
             var lines = new List<string>();

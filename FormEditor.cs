@@ -12,6 +12,7 @@ namespace GENERATORpr.Editor
     public partial class FormEditor : Form
     {
         private string xmlFilePath;
+        public string XmlFilePath => xmlFilePath;
         private const int gridSize = 20;
         private float zoomFactor = 1.0f;
         private const float zoomStep = 0.1f;
@@ -602,18 +603,17 @@ namespace GENERATORpr.Editor
         {
             highlightedRouteLines.Clear();
 
-            var pointsDict = new Dictionary<string, Point>();
-            foreach (var pt in loadedPoints)
-                pointsDict[pt.Item3] = new Point(pt.Item1, pt.Item2);
+            var pointsDict = loadedPoints.ToDictionary(p => p.Item3, p => new Point(p.Item1, p.Item2));
 
             for (int i = 0; i < routePointIds.Count - 1; i++)
             {
-                string id1 = routePointIds[i];
-                string id2 = routePointIds[i + 1];
+                string fromId = routePointIds[i];
+                string toId = routePointIds[i + 1];
 
-                if (pointsDict.ContainsKey(id1) && pointsDict.ContainsKey(id2))
+                if (pointsDict.TryGetValue(fromId, out var pt1) &&
+                    pointsDict.TryGetValue(toId, out var pt2))
                 {
-                    highlightedRouteLines.Add(Tuple.Create(pointsDict[id1], pointsDict[id2]));
+                    highlightedRouteLines.Add(Tuple.Create(pt1, pt2));
                 }
             }
 
