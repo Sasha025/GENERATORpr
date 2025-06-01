@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GENERATORpr
@@ -17,6 +11,31 @@ namespace GENERATORpr
             InitializeComponent();
         }
 
+        public void SetData(string start, string end, List<string> route)
+        {
+            txtName.Text = $"{start} → {end}";
+            txtName.ReadOnly = true;
+
+            dgvRoutes.Rows.Clear();
+            dgvRoutes.Columns.Clear();
+
+            dgvRoutes.Columns.Add("Step", "Шаг");
+            dgvRoutes.Columns.Add("Point", "Точка");
+            dgvRoutes.Columns.Add("Description", "Описание перехода");
+
+            int step = 1;
+            for (int i = 0; i < route.Count; i++)
+            {
+                string description = (i == 0)
+                    ? "Начальная точка"
+                    : $"Из точки {route[i - 1]} в {route[i]}";
+
+                dgvRoutes.Rows.Add(step++, route[i], description);
+            }
+
+            lblInfo.Text = $"Протяжённость маршрута: {route.Count - 1} шагов.";
+        }
+
         private void btnBack_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -24,7 +43,6 @@ namespace GENERATORpr
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            // Заглушка
             MessageBox.Show("Функция сохранения пока не реализована.");
         }
     }

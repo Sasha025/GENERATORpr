@@ -187,7 +187,7 @@ namespace GENERATORpr.Editor
             }
             if (highlightedRouteLines.Count > 0)
             {
-                using (Pen highlightPen = new Pen(Color.FromArgb(100, Color.LimeGreen), 6))
+                using (Pen highlightPen = new Pen(Color.FromArgb(100, Color.LimeGreen), 8))
                 {
                     highlightPen.StartCap = LineCap.Round;
                     highlightPen.EndCap = LineCap.Round;
