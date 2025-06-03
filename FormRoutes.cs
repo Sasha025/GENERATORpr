@@ -11,7 +11,8 @@ namespace GENERATORpr.Editor
     {
         private FormEditor editorForm;
         private string xmlFilePath;
-        private Dictionary<string, List<string>> routeMap = new Dictionary<string, List<string>>();
+        private Dictionary<string, Tuple<List<string>, int>> routeMap = new Dictionary<string, Tuple<List<string>, int>>();
+
 
         public FormRoutes(string xmlFilePath, FormEditor editor)
         {
@@ -61,7 +62,7 @@ namespace GENERATORpr.Editor
 
                     if (visitedPairs.Contains(key) || visitedPairs.Contains(reverseKey)) continue;
 
-                    var path = FindPath(graph, start.Id, end.Id);
+                    var path = FindPath(graph, start.Id, end.Id, doc);
                     if (path != null)
                     {
                         routeMap[key] = path;
@@ -96,7 +97,7 @@ namespace GENERATORpr.Editor
             return graph;
         }
 
-        private List<string> FindPath(Dictionary<string, List<string>> graph, string start, string end)
+        private Tuple<List<string>, int> FindPath(Dictionary<string, List<string>> graph, string start, string end, XDocument doc)
         {
             var visited = new HashSet<string>();
             var queue = new Queue<List<string>>();
@@ -108,7 +109,43 @@ namespace GENERATORpr.Editor
                 var last = path.Last();
 
                 if (last == end)
-                    return path;
+                {
+                    int totalLength = 0;
+
+                    for (int i = 0; i < path.Count - 1; i++)
+                    {
+                        string from = path[i];
+                        string to = path[i + 1];
+
+                        var p1 = doc.Descendants("point").FirstOrDefault(p => (string)p.Attribute("id") == from);
+                        var p2 = doc.Descendants("point").FirstOrDefault(p => (string)p.Attribute("id") == to);
+
+                        if (p1 != null && p2 != null)
+                        {
+                            int x1 = (int)p1.Attribute("X");
+                            int y1 = (int)p1.Attribute("Y");
+                            int x2 = (int)p2.Attribute("X");
+                            int y2 = (int)p2.Attribute("Y");
+
+                            var line = doc.Descendants("line").FirstOrDefault(l =>
+                                ((int)l.Attribute("sX") == x1 && (int)l.Attribute("sY") == y1 &&
+                                 (int)l.Attribute("eX") == x2 && (int)l.Attribute("eY") == y2) ||
+                                ((int)l.Attribute("sX") == x2 && (int)l.Attribute("sY") == y2 &&
+                                 (int)l.Attribute("eX") == x1 && (int)l.Attribute("eY") == y1));
+
+                            if (line != null)
+                            {
+                                var info = line.Element("lineInfo");
+                                if (info != null && int.TryParse(info.Attribute("length")?.Value, out int len))
+                                {
+                                    totalLength += len;
+                                }
+                            }
+                        }
+                    }
+
+                    return Tuple.Create(path, totalLength);
+                }
 
                 foreach (var neighbor in graph[last])
                 {
@@ -134,24 +171,27 @@ namespace GENERATORpr.Editor
 
                 if (routeMap.TryGetValue(selectedRoute, out var path))
                 {
+                    List<string> points = path.Item1;
+
                     int maxPerLine = 6;
-                    for (int i = 0; i < path.Count; i += maxPerLine)
+                    for (int i = 0; i < points.Count; i += maxPerLine)
                     {
-                        var segment = path.Skip(i).Take(maxPerLine).ToList();
+                        var segment = points.Skip(i).Take(maxPerLine).ToList();
                         string line = (i == 0)
                             ? string.Join(" → ", segment)
                             : "→ " + string.Join(" → ", segment);
                         listBoxDetails.Items.Add(line);
                     }
 
-                    // ✅ Подсветка маршрута
+                    //  Подсветка маршрута
                     if (editorForm != null)
                     {
-                        editorForm.HighlightRoute(path);
+                        editorForm.HighlightRoute(points);
                     }
                 }
             }
-        }   
+        }
+
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             base.OnFormClosed(e);
@@ -172,13 +212,16 @@ namespace GENERATORpr.Editor
                 {
                     using (var writer = new System.IO.StreamWriter(saveDialog.FileName, false, Encoding.UTF8))
                     {
-                        writer.WriteLine("Маршрут;Описание");
+                        writer.WriteLine("Маршрут;Описание;Длина (м)");
 
                         foreach (var entry in routeMap)
                         {
                             string key = entry.Key;
-                            string fullPath = string.Join(" → ", entry.Value);
-                            writer.WriteLine($"\"{key}\";\"{fullPath}\"");
+                            List<string> points = entry.Value.Item1;
+                            int length = entry.Value.Item2;
+
+                            string fullPath = string.Join(" → ", points);
+                            writer.WriteLine($"\"{key}\";\"{fullPath}\";\"{length}\"");
                         }
                     }
 
@@ -190,6 +233,7 @@ namespace GENERATORpr.Editor
                 }
             }
         }
+
 
     }
 }

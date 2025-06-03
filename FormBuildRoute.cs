@@ -300,9 +300,11 @@ namespace GENERATORpr
                     StartPointId = id;
                     editor.StartPoint = point;
                     editor.UpdateRoutePreview();
+                    UpdateRouteName(); 
                 }
             }
         }
+
 
         private void LstEnd_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -316,9 +318,11 @@ namespace GENERATORpr
                     EndPointId = id;
                     editor.EndPoint = point;
                     editor.UpdateRoutePreview();
+                    UpdateRouteName(); 
                 }
             }
         }
+
 
         private void lstBanPoints_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -341,6 +345,13 @@ namespace GENERATORpr
                 .ToList();
 
             editor.UpdateRoutePreview();
+        }
+        private void UpdateRouteName()
+        {
+            if (!string.IsNullOrEmpty(StartPointId) && !string.IsNullOrEmpty(EndPointId))
+            {
+                txtName.Text = $"{StartPointId} → {EndPointId}";
+            }
         }
 
         private void FormBuildRoute_FormClosing(object sender, FormClosingEventArgs e)
